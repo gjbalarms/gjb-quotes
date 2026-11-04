@@ -1,15 +1,11 @@
-// GJB Quote Builder – sync connection.
-// Paste your Firebase web config between the braces (see SETUP.md, step 2),
-// then every phone and computer that opens the site connects automatically.
-// Leave it as null to keep everything on each device only.
-window.GJB_FIREBASE = null;
-/* Example:
+// GJB Quote Builder – sync connection (Firebase project: gjb-quotes).
+// This web config is a public identifier, not a password – access is
+// controlled by sign-in and the Firestore security rules.
 window.GJB_FIREBASE = {
-  apiKey: "AIza...",
+  apiKey: "AIzaSyAMMUFjGI1KWmN-NucsF85Cd_pURIbQWwI",
   authDomain: "gjb-quotes.firebaseapp.com",
   projectId: "gjb-quotes",
-  storageBucket: "gjb-quotes.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abc123"
+  storageBucket: "gjb-quotes.firebasestorage.app",
+  messagingSenderId: "202260053974",
+  appId: "1:202260053974:web:73b28da2e5635ce9ae6e77"
 };
-*/
