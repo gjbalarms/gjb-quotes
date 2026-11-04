@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<script src="config.js"></script>
+<script src="config.js?v=3"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -170,6 +170,17 @@ nav.tabs button{position:relative}
   #printArea,#printArea *{visibility:visible}
   #printArea{display:block;position:absolute;left:0;top:0;width:100%;color:#000;background:#fff;font-family:Calibri,Carlito,Arial,sans-serif}
 }
+
+/* sign-in screen */
+.gate{position:fixed;inset:0;z-index:70;background:var(--page);display:none;align-items:center;justify-content:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.gate.on{display:flex}
+.gate .box{width:100%;max-width:400px;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 18px}
+.gate .brand{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.gate .brand img{width:64px;height:48px;object-fit:contain;background:#fff;border-radius:8px;padding:3px;border:1px solid var(--line)}
+.gate h1{font-family:"Barlow Semi Condensed",sans-serif;font-size:24px;margin:0;color:var(--brand-ink)}
+.gate .btn{width:100%;margin-top:4px}
+.gate .skip{background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline;margin-top:12px;width:100%;padding:8px}
+.gate .err{color:var(--bad);font-size:14px;min-height:18px;margin:6px 0 0}
 </style>
 </head>
 <body>
@@ -177,6 +188,19 @@ nav.tabs button{position:relative}
   <img id="logoTop" alt="GJB Security and Alarms logo">
   <div><div class="t1">GJB Quote Builder</div><div class="t2">Protect what matters to you</div></div>
 </header>
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateT">
+  <div class="box">
+    <div class="brand"><img id="gateLogo" alt=""><div><h1 id="gateT">GJB Quote Builder</h1><div class="hint" style="margin:0">Sign in to load your clients, quotes and invoices</div></div></div>
+    <form id="gateForm" class="grid">
+      <label class="f">Email<input id="g_email" type="email" autocomplete="username" inputmode="email" required></label>
+      <label class="f">Password<input id="g_pass" type="password" autocomplete="current-password" required></label>
+      <p class="err" id="g_err"></p>
+      <button class="btn primary" type="submit" id="g_in">Sign in</button>
+      <button class="btn" type="button" id="g_reset">Forgot password</button>
+    </form>
+    <button class="skip" type="button" id="g_skip">Use on this device without signing in</button>
+  </div>
+</div>
 
 <main>
   <!-- PRODUCTS -->
@@ -434,7 +458,7 @@ function parseCfg(t){if(!t)return null;if(typeof t==='object')return t;t=String(
 function getCfg(){let c=null;try{c=parseCfg(localStorage.getItem(CFG_KEY))}catch(e){}
   if(!c&&window.GJB_FIREBASE&&window.GJB_FIREBASE.apiKey)c=window.GJB_FIREBASE;return c&&c.apiKey&&c.projectId?c:null}
 let FB=null,UNSUB=[];
-function cloudUI(state,msg){const st=document.getElementById('cloudStatus');if(!st)return;
+function cloudUI(state,msg){const gt=document.getElementById('gate');if(gt){let sk=false;try{sk=sessionStorage.getItem('gjb-skip')==='1'}catch(e){}gt.classList.toggle('on',state==='out'&&!sk);if(state==='out'&&!sk)setTimeout(()=>{const e=document.getElementById('g_email');if(e&&!e.value)e.focus()},50)}const st=document.getElementById('cloudStatus');if(!st)return;
   document.getElementById('cloudSignIn').hidden=state!=='out';
   document.getElementById('cloudSignedIn').hidden=state!=='in';
   st.textContent=msg;}
@@ -500,6 +524,16 @@ document.getElementById('cl_save').onclick=()=>{const c=parseCfg(document.getEle
   try{localStorage.setItem(CFG_KEY,JSON.stringify(c))}catch(e){}toast('Saved – reloading');setTimeout(()=>location.reload(),600)};
 document.getElementById('cl_clear').onclick=async()=>{if(!await ask('Remove the sync connection from this device?'))return;try{localStorage.removeItem(CFG_KEY)}catch(e){}location.reload()};
 (()=>{const c=getCfg();if(c)document.getElementById('cl_cfg').value=JSON.stringify(c,null,1)})();
+document.getElementById('gateLogo').src=LOGO;
+document.getElementById('gateForm').addEventListener('submit',async ev=>{ev.preventDefault();const e=document.getElementById('g_email').value.trim(),p=document.getElementById('g_pass').value,er=document.getElementById('g_err'),b=document.getElementById('g_in');
+  er.textContent='';b.disabled=true;b.textContent='Signing in…';
+  try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);await firebase.auth().signInWithEmailAndPassword(e,p);document.getElementById('g_pass').value='';toast('Signed in – loading your data')}
+  catch(err){er.textContent=/wrong-password|invalid-credential|user-not-found|invalid-login|invalid-email/.test(err.code||'')?'Email or password not recognised':'Couldn’t sign in – check your signal and try again'}
+  finally{b.disabled=false;b.textContent='Sign in'}});
+document.getElementById('g_reset').onclick=async()=>{const e=document.getElementById('g_email').value.trim(),er=document.getElementById('g_err');if(!e){er.textContent='Type your email first';return}
+  try{await firebase.auth().sendPasswordResetEmail(e);er.textContent='';toast('Password reset email sent')}catch(err){er.textContent='Couldn’t send the reset email'}};
+document.getElementById('g_skip').onclick=()=>{try{sessionStorage.setItem('gjb-skip','1')}catch(e){}document.getElementById('gate').classList.remove('on')};
+
 
 /* ---------- pricing ---------- */
 const money=n=>'£'+(Math.round(n*100)/100).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
