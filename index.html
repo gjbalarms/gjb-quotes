@@ -359,14 +359,14 @@ nav.tabs button{position:relative}
     <div class="card grid" id="cloudCard">
       <p class="hint" style="margin:0" id="cloudStatus">Not set up – everything is saved on this device only.</p>
       <div id="cloudSignIn" class="grid" hidden>
-        <label class="f">Email<input id="cl_email" type="email" autocomplete="username" inputmode="email"></label>
-        <label class="f">Password<input id="cl_pass" type="password" autocomplete="current-password"></label>
-        <div class="btns" style="margin-top:0"><button class="btn primary" id="cl_in">Sign in</button><button class="btn" id="cl_reset">Forgot password</button></div>
+        <label class="f">Email<input id="sy_email" type="email" autocomplete="username" inputmode="email"></label>
+        <label class="f">Password<input id="sy_pass" type="password" autocomplete="current-password"></label>
+        <div class="btns" style="margin-top:0"><button class="btn primary" id="sy_in">Sign in</button><button class="btn" id="sy_reset">Forgot password</button></div>
       </div>
-      <div class="btns" style="margin-top:0" id="cloudSignedIn" hidden><button class="btn danger" id="cl_out">Sign out of this device</button></div>
+      <div class="btns" style="margin-top:0" id="cloudSignedIn" hidden><button class="btn danger" id="sy_out">Sign out of this device</button></div>
       <details id="cloudCfgBox"><summary class="hint" style="cursor:pointer;margin:0">Connection settings</summary>
-        <label class="f" style="margin-top:8px">Firebase config (paste the block from the Firebase console)<textarea id="cl_cfg" rows="6" placeholder="apiKey: &quot;…&quot;, authDomain: &quot;…&quot;, projectId: &quot;…&quot; …"></textarea></label>
-        <div class="btns"><button class="btn" id="cl_save">Save connection</button><button class="btn danger" id="cl_clear">Remove</button></div>
+        <label class="f" style="margin-top:8px">Firebase config (paste the block from the Firebase console)<textarea id="sy_cfg" rows="6" placeholder="apiKey: &quot;…&quot;, authDomain: &quot;…&quot;, projectId: &quot;…&quot; …"></textarea></label>
+        <div class="btns"><button class="btn" id="sy_save">Save connection</button><button class="btn danger" id="sy_clear">Remove</button></div>
       </details>
     </div>
     <h2>Backup &amp; export</h2>
@@ -513,18 +513,18 @@ function initCloud(){
     else{cloudUI('out','Sign in to sync with your other devices. Until then, changes are saved on this device only.');setSync('Not signed in – saved on this device only. Sign in under Settings to sync.')}
   });
 }
-document.getElementById('cl_in').onclick=async()=>{const e=document.getElementById('cl_email').value.trim(),p=document.getElementById('cl_pass').value;
+document.getElementById('sy_in').onclick=async()=>{const e=document.getElementById('sy_email').value.trim(),p=document.getElementById('sy_pass').value;
   if(!e||!p){toast('Enter your email and password');return}
-  try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);await firebase.auth().signInWithEmailAndPassword(e,p);document.getElementById('cl_pass').value='';toast('Signed in')}
+  try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);await firebase.auth().signInWithEmailAndPassword(e,p);document.getElementById('sy_pass').value='';toast('Signed in')}
   catch(err){toast(/wrong-password|invalid-credential|user-not-found|invalid-login/.test(err.code||'')?'Email or password not recognised':'Couldn’t sign in – check your signal')}};
-document.getElementById('cl_reset').onclick=async()=>{const e=document.getElementById('cl_email').value.trim();if(!e){toast('Type your email first');return}
+document.getElementById('sy_reset').onclick=async()=>{const e=document.getElementById('sy_email').value.trim();if(!e){toast('Type your email first');return}
   try{await firebase.auth().sendPasswordResetEmail(e);toast('Reset email sent')}catch(err){toast('Couldn’t send the reset email')}};
-document.getElementById('cl_out').onclick=async()=>{if(!await ask('Sign out on this device? Your data stays saved in the cloud.'))return;try{await firebase.auth().signOut()}catch(e){}};
-document.getElementById('cl_save').onclick=()=>{const c=parseCfg(document.getElementById('cl_cfg').value);
+document.getElementById('sy_out').onclick=async()=>{if(!await ask('Sign out on this device? Your data stays saved in the cloud.'))return;try{await firebase.auth().signOut()}catch(e){}};
+document.getElementById('sy_save').onclick=()=>{const c=parseCfg(document.getElementById('sy_cfg').value);
   if(!c||!c.apiKey||!c.projectId){toast('That doesn’t look like a Firebase config');return}
   try{localStorage.setItem(CFG_KEY,JSON.stringify(c))}catch(e){}toast('Saved – reloading');setTimeout(()=>location.reload(),600)};
-document.getElementById('cl_clear').onclick=async()=>{if(!await ask('Remove the sync connection from this device?'))return;try{localStorage.removeItem(CFG_KEY)}catch(e){}location.reload()};
-(()=>{const c=getCfg();if(c)document.getElementById('cl_cfg').value=JSON.stringify(c,null,1)})();
+document.getElementById('sy_clear').onclick=async()=>{if(!await ask('Remove the sync connection from this device?'))return;try{localStorage.removeItem(CFG_KEY)}catch(e){}location.reload()};
+(()=>{const c=getCfg();if(c)document.getElementById('sy_cfg').value=JSON.stringify(c,null,1)})();
 document.getElementById('gateLogo').src=LOGO;
 document.getElementById('gateForm').addEventListener('submit',async ev=>{ev.preventDefault();const e=document.getElementById('g_email').value.trim(),p=document.getElementById('g_pass').value,er=document.getElementById('g_err'),b=document.getElementById('g_in');
   er.textContent='';b.disabled=true;b.textContent='Signing in…';
