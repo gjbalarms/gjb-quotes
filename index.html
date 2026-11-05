@@ -420,7 +420,7 @@ const PRODUCTS=[...RAW.map(r=>({id:r[0],brand:r[1],cat:r[2],code:r[3],name:r[4],
   ...SERVICES.map(r=>({id:r[0],brand:r[1],cat:r[2],code:r[3],name:r[4],cost:null,fixed:r[5]}))];
 const BYID=Object.fromEntries(PRODUCTS.map(p=>[p.id,p]));
 
-const DEF_SETTINGS={markup:30,supVat:20,dayRate:125,round:0,vat:0,valid:30,next:1,lComb:105,lAnn:95,lCloud:40,mMon:600,mComb:105,mAnn:85,mCloud:40,dueWin:30,nextInv:1,terms:0,a1:'p34',a1p:129,a2:'p44',a2p:62,bizAddr:'Sheffield',bank:'',accName:'GJB Security and Alarms',sort:'',accNo:'',noVat:true};
+const DEF_SETTINGS={markup:30,supVat:20,dayRate:125,round:0,vat:0,valid:30,next:1,lComb:105,lAnn:95,lCloud:40,mMon:600,mComb:105,mAnn:85,mCloud:40,dueWin:30,nextInv:1,terms:0,a1:'p34',a1p:129,a2:'p44',a2p:62,bizAddr:'40 Harvey Street\nSheffield\nS36 2QB',bank:'',accName:'GJB Security and Alarms',sort:'',accNo:'',noVat:true};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const DEF_INTRO="Thank you for your enquiry. Please find our quotation below.";
 function blankQuote(){return {qty:{},custom:[],cust:{name:'',addr:'',phone:'',email:''},no:'',date:today(),eng:1,days:0,disc:'',intro:DEF_INTRO,notes:''}}
@@ -441,7 +441,7 @@ function persist(){lsSave();if(!DB)return;clearTimeout(pushT);pushT=setTimeout(p
 async function pushCloud(){if(!DB)return;
   try{await DB.doc(`data/users/${UID}/state`).set({quote:S.quote,updated:Date.now(),migrated:true})}catch(e){}
   const sh=JSON.stringify({settings:S.settings,over:S.over});
-  const blank=!S.settings.bank&&!S.settings.accNo&&!S.settings.sort&&!Object.keys(S.over||{}).length&&String(S.settings.bizAddr||'Sheffield')==='Sheffield';
+  const blank=!S.settings.bank&&!S.settings.accNo&&!S.settings.sort&&!Object.keys(S.over||{}).length;
   if(sh!==lastShared&&!blank){lastShared=sh;try{await SH().set({settings:S.settings,over:S.over,updated:Date.now()})}catch(e){syncFail(e)}}}
 async function saveQuoteCloud(q){if(!DB||!q||!q.key)return;try{if(!q.by)q.by=UID;await SH().collection('quotes').doc(q.key).set(unlock(q))}catch(e){syncFail(e)}}
 async function saveClientCloud(c){if(!DB||!c||!c.key)return;try{await SH().collection('clients').doc(c.key).set(unlock(c))}catch(e){syncFail(e)}}
@@ -930,7 +930,7 @@ document.getElementById('pv_dl').onclick=async()=>{if(pvDownload){const fn=pvDow
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('pv').classList.contains('on'))closePreview()});
 function previewQuote(q,live){if(!q.lines.length){toast('Add at least one item first');return}showPreview(`Quote ${q.no} – ${q.cust.name||'no name'}`,()=>buildPdf(q),()=>makePdf(q),()=>live?emailCurrentQuote():emailQuote(q))}
 function previewInvoice(q){showPreview(`Invoice ${q.invoice.no} – ${q.cust.name||''}`,()=>buildInvoice(q),()=>makeInvoice(q),()=>emailInvoice(q))}
-function bizLine(){return String(S.settings.bizAddr||'Sheffield').split(/\n/).map(x=>x.trim()).filter(Boolean).join(', ')}
+function bizLine(){const v=String(S.settings.bizAddr||'').trim();return String(!v||v==='Sheffield'?'40 Harvey Street\nSheffield\nS36 2QB':v).split(/\n/).map(x=>x.trim()).filter(Boolean).join(', ')}
 function buildInvoice(q){
   const doc=newDoc();const inv=q.invoice;const s=S.settings;
   const W=210,M=18,P=[2,16,31],P2=[31,64,104],G=[85,85,85],L=[232,237,243],GR=[19,92,55];
