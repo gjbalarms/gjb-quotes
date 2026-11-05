@@ -441,7 +441,8 @@ function persist(){lsSave();if(!DB)return;clearTimeout(pushT);pushT=setTimeout(p
 async function pushCloud(){if(!DB)return;
   try{await DB.doc(`data/users/${UID}/state`).set({quote:S.quote,updated:Date.now(),migrated:true})}catch(e){}
   const sh=JSON.stringify({settings:S.settings,over:S.over});
-  if(sh!==lastShared){lastShared=sh;try{await SH().set({settings:S.settings,over:S.over,updated:Date.now()})}catch(e){syncFail(e)}}}
+  const blank=!S.settings.bank&&!S.settings.accNo&&!S.settings.sort&&!Object.keys(S.over||{}).length&&String(S.settings.bizAddr||'Sheffield')==='Sheffield';
+  if(sh!==lastShared&&!blank){lastShared=sh;try{await SH().set({settings:S.settings,over:S.over,updated:Date.now()})}catch(e){syncFail(e)}}}
 async function saveQuoteCloud(q){if(!DB||!q||!q.key)return;try{if(!q.by)q.by=UID;await SH().collection('quotes').doc(q.key).set(unlock(q))}catch(e){syncFail(e)}}
 async function saveClientCloud(c){if(!DB||!c||!c.key)return;try{await SH().collection('clients').doc(c.key).set(unlock(c))}catch(e){syncFail(e)}}
 async function deleteClientCloud(key){if(!DB)return;try{await SH().collection('clients').doc(key).delete()}catch(e){syncFail(e)}}
