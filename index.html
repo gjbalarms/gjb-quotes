@@ -789,6 +789,9 @@ function openInvoiceSheet(i,qNew){
    <label class="f">Invoice date<input id="iv_date" type="date" value="${idate}"></label></div>
    <div class="grid g2"><label class="f">Work completed<input id="iv_sup" type="date" value="${esc(inv.supply||today())}"></label>
    <label class="f">Pay within (days, 0 = on receipt)<input id="iv_terms" type="number" step="1" inputmode="numeric" value="${inv.terms??s.terms}"></label></div>
+   <label class="f">Customer PO / order number (if they gave one)<input id="iv_po" value="${esc(inv.po!=null?inv.po:((clientFor(q.cust)||{}).po||''))}" placeholder="e.g. SCHOP26125"></label>
+   <label class="f">Invoice to – if billing goes to a different company/address (e.g. head office)<textarea id="iv_bill" rows="5" placeholder="Leave blank to invoice the customer above">${esc(inv.billTo!=null?inv.billTo:((clientFor(q.cust)||{}).billTo||''))}</textarea></label>
+   <p class="hint" style="margin-top:-4px">When filled in, the invoice is addressed here and the customer's address shows as the site / delivery address.</p>
    <label class="f">Deposit already paid (£)<input id="iv_dep" type="number" step="0.01" inputmode="decimal" placeholder="0.00" value="${inv.deposit||''}"></label>
    <label class="f">Note on invoice (optional)<input id="iv_note" value="${esc(inv.note||'')}" placeholder="e.g. System installed and fully tested"></label>
    <p class="hint" id="iv_sum"></p>
@@ -803,7 +806,8 @@ function openInvoiceSheet(i,qNew){
     const no=document.getElementById('iv_no').value.trim();if(!no){toast('Add an invoice number');return}
     const clash=S.saved.find(x=>x!==q&&(x.invoice&&x.invoice.no===no||x.direct&&x.no===no));if(clash){toast(`${no} is already used for ${clash.cust.name||clash.no}`);return}
     const date=document.getElementById('iv_date').value||today();const terms=+document.getElementById('iv_terms').value||0;
-    q.invoice={...inv,no,date,supply:document.getElementById('iv_sup').value,terms,dueDate:addDays(date,terms),deposit:+document.getElementById('iv_dep').value||0,note:document.getElementById('iv_note').value.trim()};
+    q.invoice={...inv,no,date,supply:document.getElementById('iv_sup').value,terms,dueDate:addDays(date,terms),deposit:+document.getElementById('iv_dep').value||0,note:document.getElementById('iv_note').value.trim(),po:document.getElementById('iv_po').value.trim(),billTo:document.getElementById('iv_bill').value.trim()};
+    {const cl=clientFor(q.cust);if(cl&&(cl.billTo||'')!==q.invoice.billTo){cl.billTo=q.invoice.billTo;persist();saveClientCloud(cl)}}
     if(q.status!=='paid')q.status='invoiced';
     if(!q.acceptedAt)q.acceptedAt=today();
     if(qNew&&!S.saved.includes(q)){q.no=no;if(q.draft)q.draft.no=no;S.saved.unshift(q);S.quote=blankQuote();S.quote.no=nextNo();fillForms();renderAll()}
@@ -938,11 +942,15 @@ function buildInvoice(q){
   doc.setDrawColor(...P);doc.setLineWidth(0.6);doc.line(M,40,W-M,40);
   doc.setTextColor(...P2);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text('INVOICE',M,50);
   if(q.status==='paid'){doc.setDrawColor(...GR);doc.setTextColor(...GR);doc.setLineWidth(0.8);doc.roundedRect(M+36,43.5,40,9,1.5,1.5,'S');doc.setFontSize(11);doc.text('PAID '+fmtDate(inv.paidOn),M+56,49.5,{align:'center'})}
-  const det=[['Invoice No.',inv.no],['Account ref.',refFor(q.cust)],['Invoice date',fmtDate(inv.date)],[q.kind==='renewal'?'Renewal date':'Work completed',q.kind==='renewal'?'':fmtDate(inv.supply)],['Payment due',dueText(inv)],['Quote ref.',q.kind==='renewal'||q.direct?'':q.no]].filter(d=>d[1]);
+  const det=[['Invoice No.',inv.no],['Account ref.',refFor(q.cust)],['Invoice date',fmtDate(inv.date)],[q.kind==='renewal'?'Renewal date':'Work completed',q.kind==='renewal'?'':fmtDate(inv.supply)],['Payment due',dueText(inv)],['PO number',inv.po||''],['Quote ref.',q.kind==='renewal'||q.direct?'':q.no]].filter(d=>d[1]);
   doc.setFontSize(10);det.forEach((d,i)=>{doc.setFont('helvetica','bold');doc.setTextColor(...P2);doc.text(d[0],W-M-38,57+i*5.2,{align:'right'});doc.setFont('helvetica','normal');doc.setTextColor(30);doc.text(String(d[1]),W-M,57+i*5.2,{align:'right'})});
   doc.setFont('helvetica','bold');doc.setTextColor(...P2);doc.text('Invoice to:',M,57);
   doc.setFont('helvetica','normal');doc.setTextColor(30);
-  let y=62.2;[q.cust.name,...String(q.cust.addr||'').split(/\n/),q.cust.email||''].map(x=>String(x||'').trim()).filter(Boolean).forEach(x=>{doc.text(x,M,y);y+=5.2});
+  let y=62.2;const lw=W-2*M-62;
+  if(inv.billTo){String(inv.billTo).split(/\n/).map(x=>x.trim()).filter(Boolean).forEach(x=>{doc.splitTextToSize(x,lw).forEach(t=>{doc.text(t,M,y);y+=5.2})});
+    y+=2.5;doc.setFont('helvetica','bold');doc.setTextColor(...P2);doc.text('Site / delivery address:',M,y);y+=5.2;doc.setFont('helvetica','normal');doc.setTextColor(30);
+    [q.cust.name,...String(q.cust.addr||'').split(/\n/)].map(x=>String(x||'').trim()).filter((x,i,a)=>x&&a.indexOf(x)===i).forEach(x=>{doc.text(x,M,y);y+=5.2})}
+  else [q.cust.name,...String(q.cust.addr||'').split(/\n/),q.cust.email||''].map(x=>String(x||'').trim()).filter(Boolean).forEach(x=>{doc.text(x,M,y);y+=5.2});
   y=Math.max(y,57+det.length*5.2+3)+4;
   doc.setFontSize(10.5);const intro=doc.splitTextToSize(inv.note?inv.note:'Thank you for choosing GJB Security and Alarms. Please find your invoice for the work completed below.',W-2*M);doc.text(intro,M,y);y+=intro.length*5+4;
   const cx={no:M+2,desc:M+12,qty:W-M-58,each:W-M-24,tot:W-M-2};
