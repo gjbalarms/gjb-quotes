@@ -983,7 +983,7 @@ function buildInvoice(q){
   } else {doc.setTextColor(50);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(`Payment received ${fmtDate(inv.paidOn)}${inv.method?' by '+inv.method.toLowerCase():''}. Thank you.`,M,y);y+=8}
   if(y>255){footer();doc.addPage();y=20}
   doc.setFontSize(9);doc.setTextColor(...G);if(s.noVat&&!(q.vatRate>0)){doc.text('GJB Security and Alarms is not VAT registered. No VAT has been charged.',M,y);y+=6}
-  doc.setFontSize(10.5);doc.setTextColor(30);doc.text('Thank you for your business.',M,y+2);y+=8;doc.text('Kind regards,',M,y);y+=10;
+  doc.setFontSize(10.5);doc.setTextColor(30);doc.text('Thank you for your business. Kind regards,',M,y+2);y+=9;
   doc.setFont('helvetica','bold');doc.text('Gavin Bell',M,y);doc.setFont('helvetica','normal');doc.text('Manager, GJB Security and Alarms',M,y+5);
   footer();return doc;
 }

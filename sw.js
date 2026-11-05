@@ -1,5 +1,5 @@
 // GJB Quote Builder – lets the app open with no signal on site.
-const CACHE = 'gjb-quotes-v6';
+const CACHE = 'gjb-quotes-v7';
 const CORE = ['./', './index.html', './config.js', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
