@@ -589,6 +589,7 @@ function renderProducts(){
     if(!['All','Picked'].includes(fCat)&&brandGroup(p)!==fCat)return false;
     if(q&&!(p.name+' '+p.code+' '+p.cat+' '+p.brand+' '+(p.desc||'')).toLowerCase().includes(q))return false;
     return true;});
+  if(!window.GJB_CCTV_IMG&&list.some(p=>p.brand==='CCTV'))loadImgs();
   const el=document.getElementById('plist');
   if(!list.length){el.innerHTML=`<div class="empty">${fCat==='Picked'?'Nothing picked yet. Use + on any product to add it.':'No products match that search.'}</div>`;return}
   let html='',cur=null,open=false;
@@ -650,7 +651,7 @@ function openPriceSheet(id){
   openSheet(`<h2 id="sheetTitle">${esc(p.name)}</h2>
   <div class="grid">
    ${svc?'':`<div class="grid g2"><label class="f">Supplier price ex VAT (£)<input id="e_cost" type="number" step="0.01" inputmode="decimal" value="${o.cost!=null?o.cost:p.cost}"></label>
-   <label class="f">Markup (%)<input id="e_mk" type="number" step="1" inputmode="decimal" placeholder="${S.settings.markup} (default)" value="${o.markup??''}"></label></div>`}
+   <label class="f">Markup (%)<input id="e_mk" type="number" step="1" inputmode="decimal" placeholder="${p.brand==='CCTV'&&S.settings.cctvMarkup!=null&&S.settings.cctvMarkup!==''?S.settings.cctvMarkup:S.settings.markup} (default)" value="${o.markup??''}"></label></div>`}
    <label class="f">Fixed sell price (£)<input id="e_fix" type="number" step="0.01" inputmode="decimal" placeholder="${svc?p.fixed:'Leave blank to use markup'}" value="${o.fixed??''}"></label>
    <p class="hint" id="e_prev"></p>
    <div class="btns"><button class="btn primary" id="e_save">Save price</button>${Object.keys(o).length?'<button class="btn danger" id="e_reset">Reset to list price</button>':''}<button class="btn" id="e_cancel">Cancel</button></div>
@@ -1844,7 +1845,7 @@ let toastT;function toast(m){const t=document.getElementById('toast');t.textCont
 function renderAll(prod=true){renderChips();if(prod)renderProducts();else renderProducts();renderLines();renderDock();renderSaved();renderOverrides();renderClients();renderDue()}
 
 document.getElementById('logoTop').src=LOGO;
-lsLoad();migrate();fillForms();renderAll();initCloud();setTimeout(loadImgs,1200);
+lsLoad();migrate();fillForms();renderAll();initCloud();loadImgs();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
 </script>
 </body>
